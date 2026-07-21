@@ -1,300 +1,275 @@
 <?php
+// app/Http/Controllers/Api/CouponController.php
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCouponRequest;
+use App\Http\Requests\UpdateCouponRequest;
+use App\Http\Requests\ValidateCouponRequest;
 use App\Http\Resources\CouponResource;
+use App\Http\Resources\CouponValidationResource;
 use App\Models\Coupon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class CouponController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Display a listing of coupons.
+     */
+    public function index(Request $request): JsonResponse
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+        $query = Coupon::withCount('bookings');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('code', 'like', "%{$search}%");
         }
 
-        $coupons = Coupon::withCount('bookings')->paginate(10);
-        return CouponResource::collection($coupons);
+        if ($request->has('min_discount')) {
+            $query->where('discount', '>=', $request->min_discount);
+        }
+
+        if ($request->has('max_discount')) {
+            $query->where('discount', '<=', $request->max_discount);
+        }
+
+        $sortField = $request->sort_by ?? 'created_at';
+        $sortDirection = $request->sort_direction ?? 'desc';
+        $query->orderBy($sortField, $sortDirection);
+
+        $coupons = $query->paginate($request->per_page ?? 15);
+
+        return response()->json([
+            'message' => 'Coupons retrieved successfully.',
+            'data' => CouponResource::collection($coupons),
+            'pagination' => [
+                'current_page' => $coupons->currentPage(),
+                'last_page' => $coupons->lastPage(),
+                'per_page' => $coupons->perPage(),
+                'total' => $coupons->total(),
+            ]
+        ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created coupon.
+     */
+    public function store(StoreCouponRequest $request): JsonResponse
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
-        }
-
-        $request->validate([
-            'code' => 'required|string|max:50|unique:coupons,code',
-            'discount' => 'required|string|max:20',
-            'type' => 'required|string|in:percentage,fixed',
-            'description' => 'nullable|string|max:500',
-            'min_order_amount' => 'nullable|numeric|min:0',
-            'max_discount_amount' => 'nullable|numeric|min:0',
-            'starts_at' => 'nullable|date|after:now',
-            'expires_at' => 'nullable|date|after:starts_at',
-            'usage_limit' => 'nullable|integer|min:1',
-            'per_user_limit' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
-
-        $data = $request->all();
-        
-        if ($request->type === 'percentage' && !str_contains($request->discount, '%')) {
-            $data['discount'] = $request->discount . '%';
-        }
-
+        $data = $request->validated();
         $coupon = Coupon::create($data);
 
         return response()->json([
-            'message' => 'Coupon created successfully',
-            'coupon' => new CouponResource($coupon)
+            'message' => 'Coupon created successfully.',
+            'data' => new CouponResource($coupon),
         ], 201);
     }
 
-    public function show(Coupon $coupon)
+    /**
+     * Display the specified coupon.
+     */
+    public function show($id): JsonResponse
     {
-        if (Auth::user()->role !== 'admin') {
-            return new CouponResource($coupon);
+        $coupon = Coupon::withCount('bookings')->find($id);
+
+        if (!$coupon) {
+            return response()->json(['message' => 'Coupon not found.'], 404);
         }
 
-        $coupon->loadCount('bookings');
-        return new CouponResource($coupon);
+        return response()->json([
+            'message' => 'Coupon retrieved successfully.',
+            'data' => new CouponResource($coupon),
+        ]);
     }
 
-    public function update(Request $request, Coupon $coupon)
+    /**
+     * Update the specified coupon.
+     */
+    public function update(UpdateCouponRequest $request, $id): JsonResponse
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+        $coupon = Coupon::find($id);
+
+        if (!$coupon) {
+            return response()->json(['message' => 'Coupon not found.'], 404);
         }
 
-        $request->validate([
-            'code' => [
-                'sometimes',
-                'string',
-                'max:50',
-                Rule::unique('coupons', 'code')->ignore($coupon->id),
-            ],
-            'discount' => 'sometimes|string|max:20',
-            'type' => 'sometimes|string|in:percentage,fixed',
-            'description' => 'nullable|string|max:500',
-            'min_order_amount' => 'nullable|numeric|min:0',
-            'max_discount_amount' => 'nullable|numeric|min:0',
-            'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date|after:starts_at',
-            'usage_limit' => 'nullable|integer|min:1',
-            'per_user_limit' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
-
-        $data = $request->all();
-
-        if ($request->has('type') && $request->type === 'percentage' && $request->has('discount')) {
-            if (!str_contains($request->discount, '%')) {
-                $data['discount'] = $request->discount . '%';
-            }
-        }
-
+        $data = $request->validated();
         $coupon->update($data);
 
         return response()->json([
-            'message' => 'Coupon updated successfully',
-            'coupon' => new CouponResource($coupon)
+            'message' => 'Coupon updated successfully.',
+            'data' => new CouponResource($coupon->fresh()),
         ]);
     }
 
-    public function destroy(Coupon $coupon)
+    /**
+     * Remove the specified coupon.
+     */
+    public function destroy($id): JsonResponse
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+        $coupon = Coupon::find($id);
+
+        if (!$coupon) {
+            return response()->json(['message' => 'Coupon not found.'], 404);
         }
 
         if ($coupon->bookings()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete coupon because it has been used in bookings.'
-            ], 422);
+                'message' => 'Cannot delete coupon that has been used in bookings.',
+                'data' => [
+                    'used_count' => $coupon->bookings()->count(),
+                ]
+            ], 409);
         }
 
         $coupon->delete();
 
-        return response()->json(['message' => 'Coupon deleted successfully']);
+        return response()->json([
+            'message' => 'Coupon deleted successfully.'
+        ]);
     }
 
-    public function validateCoupon(Request $request)
+    /**
+     * Validate a coupon code.
+     */
+    public function validateCoupon(ValidateCouponRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string',
-            'total_price' => 'required|numeric|min:0',
-            'user_id' => 'nullable|exists:users,id',
-        ]);
-
-        $coupon = Coupon::where('code', $request->code)->first();
+        $data = $request->validated();
+        $coupon = Coupon::where('code', $data['code'])->first();
 
         if (!$coupon) {
-            return response()->json(['valid' => false, 'message' => 'Invalid coupon code'], 404);
-        }
-
-        if (!$coupon->is_active) {
-            return response()->json(['valid' => false, 'message' => 'Coupon is not active'], 422);
-        }
-
-        if ($coupon->expires_at && now()->gt($coupon->expires_at)) {
-            return response()->json(['valid' => false, 'message' => 'Coupon has expired'], 422);
-        }
-
-        if ($coupon->starts_at && now()->lt($coupon->starts_at)) {
-            return response()->json(['valid' => false, 'message' => 'Coupon is not yet active'], 422);
-        }
-
-        if ($coupon->min_order_amount && $request->total_price < $coupon->min_order_amount) {
             return response()->json([
                 'valid' => false,
-                'message' => 'Minimum order amount is ' . $coupon->min_order_amount
-            ], 422);
+                'message' => 'Invalid coupon code.',
+            ], 404);
         }
 
-        if ($coupon->usage_limit) {
-            $usedCount = $coupon->bookings()->count();
-            if ($usedCount >= $coupon->usage_limit) {
-                return response()->json([
-                    'valid' => false,
-                    'message' => 'Coupon usage limit has been reached'
-                ], 422);
-            }
-        }
-
-        if ($coupon->per_user_limit && $request->user_id) {
-            $userUsedCount = $coupon->bookings()
-                ->where('user_id', $request->user_id)
-                ->count();
-            
-            if ($userUsedCount >= $coupon->per_user_limit) {
-                return response()->json([
-                    'valid' => false,
-                    'message' => 'You have reached the maximum usage limit for this coupon'
-                ], 422);
-            }
-        }
-
-        $discountAmount = 0;
-        $isPercentage = str_contains($coupon->discount, '%');
-
-        if ($isPercentage) {
-            $percent = (float) str_replace('%', '', $coupon->discount) / 100;
-            $discountAmount = $request->total_price * $percent;
-        } else {
-            $discountAmount = (float) $coupon->discount;
-        }
-
-        if ($coupon->max_discount_amount && $discountAmount > $coupon->max_discount_amount) {
-            $discountAmount = $coupon->max_discount_amount;
-        }
-
-        $finalPrice = max(0, $request->total_price - $discountAmount);
+        $totalAmount = $data['total_amount'];
+        $discountAmount = ($coupon->discount / 100) * $totalAmount;
+        $discountAmount = min($discountAmount, $totalAmount);
+        $finalAmount = max(0, $totalAmount - $discountAmount);
 
         return response()->json([
-            'valid' => true,
-            'coupon' => [
-                'id' => $coupon->id,
-                'code' => $coupon->code,
-                'discount' => $coupon->discount,
-                'type' => $coupon->type,
-                'description' => $coupon->description,
-            ],
-            'original_price' => $request->total_price,
-            'discount_amount' => round($discountAmount, 2),
-            'final_price' => round($finalPrice, 2),
+            'message' => 'Coupon is valid.',
+            'data' => new CouponValidationResource($coupon, $totalAmount, $discountAmount, $finalAmount),
         ]);
     }
 
-    public function getActiveCoupons()
+    /**
+     * Get coupon statistics for admin dashboard.
+     */
+    public function stats(): JsonResponse
     {
-        $coupons = Coupon::where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->where(function ($query) {
-                $query->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', now());
-            })
-            ->select('id', 'code', 'discount', 'description', 'min_order_amount')
-            ->get();
-
-        return response()->json(['coupons' => $coupons]);
-    }
-
-    public function toggleStatus(Coupon $coupon)
-    {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
-        }
-
-        $coupon->is_active = !$coupon->is_active;
-        $coupon->save();
-
-        return response()->json([
-            'message' => 'Coupon status updated successfully',
-            'coupon' => new CouponResource($coupon)
-        ]);
-    }
-
-    public function bulkDelete(Request $request)
-    {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
-        }
-
-        $request->validate([
-            'coupon_ids' => 'required|array',
-            'coupon_ids.*' => 'exists:coupons,id',
-        ]);
-
-        $couponsWithBookings = Coupon::whereIn('id', $request->coupon_ids)
-            ->has('bookings')
-            ->pluck('id');
-
-        if ($couponsWithBookings->isNotEmpty()) {
-            return response()->json([
-                'message' => 'Some coupons have bookings and cannot be deleted',
-                'coupon_ids_with_bookings' => $couponsWithBookings
-            ], 422);
-        }
-
-        $deleted = Coupon::whereIn('id', $request->coupon_ids)->delete();
-
-        return response()->json([
-            'message' => $deleted . ' coupons deleted successfully'
-        ]);
-    }
-
-    public function getStatistics()
-    {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized. Admin access required.'], 403);
+        if (auth()->user()->user_type !== 'admin') {
+            return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
         $totalCoupons = Coupon::count();
-        $activeCoupons = Coupon::where('is_active', true)->count();
-        $expiredCoupons = Coupon::where('expires_at', '<', now())->count();
-        $usedCoupons = Coupon::has('bookings')->count();
-
-        $mostUsedCoupon = Coupon::withCount('bookings')
+        $totalUsed = Coupon::withCount('bookings')->get()->sum('bookings_count');
+        
+        $mostUsed = Coupon::withCount('bookings')
             ->orderBy('bookings_count', 'desc')
             ->first();
 
+        $highestDiscount = Coupon::orderBy('discount', 'desc')->first();
+
+        $averageDiscount = Coupon::avg('discount') ?? 0;
+
         return response()->json([
-            'total_coupons' => $totalCoupons,
-            'active_coupons' => $activeCoupons,
-            'expired_coupons' => $expiredCoupons,
-            'used_coupons' => $usedCoupons,
-            'most_used_coupon' => $mostUsedCoupon ? [
-                'code' => $mostUsedCoupon->code,
-                'bookings_count' => $mostUsedCoupon->bookings_count,
-            ] : null,
+            'message' => 'Coupon statistics retrieved successfully.',
+            'data' => [
+                'total_coupons' => $totalCoupons,
+                'total_used' => $totalUsed,
+                'average_discount' => round((float) $averageDiscount, 2),
+                'most_used_coupon' => $mostUsed ? new CouponResource($mostUsed) : null,
+                'highest_discount_coupon' => $highestDiscount ? new CouponResource($highestDiscount) : null,
+                'usage_rate' => $totalCoupons > 0 ? round(($totalUsed / $totalCoupons) * 100, 2) : 0,
+            ]
+        ]);
+    }
+
+    /**
+     * Bulk delete coupons.
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:coupons,id',
+        ]);
+
+        $ids = $request->ids;
+        
+        $usedCoupons = Coupon::whereIn('id', $ids)
+            ->whereHas('bookings')
+            ->count();
+
+        if ($usedCoupons > 0) {
+            return response()->json([
+                'message' => 'Cannot delete coupons that have been used in bookings.',
+                'data' => [
+                    'used_coupons' => $usedCoupons,
+                ]
+            ], 409);
+        }
+
+        $deleted = Coupon::whereIn('id', $ids)->delete();
+
+        return response()->json([
+            'message' => "{$deleted} coupons deleted successfully.",
+            'data' => [
+                'deleted_count' => $deleted,
+            ]
+        ]);
+    }
+
+    /**
+     * Generate a random coupon code.
+     */
+    public function generateCode(Request $request): JsonResponse
+    {
+        $length = $request->length ?? 8;
+        $prefix = $request->prefix ?? '';
+        $suffix = $request->suffix ?? '';
+
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        $code = $prefix . $randomString . $suffix;
+
+        while (Coupon::where('code', $code)->exists()) {
+            $randomString = '';
+            for ($i = 0; $i < $length; $i++) {
+                $randomString .= $characters[random_int(0, strlen($characters) - 1)];
+            }
+            $code = $prefix . $randomString . $suffix;
+        }
+
+        return response()->json([
+            'message' => 'Coupon code generated successfully.',
+            'data' => [
+                'code' => $code,
+            ]
+        ]);
+    }
+
+    /**
+     * Get all available coupons (for dropdown/selection).
+     */
+    public function available(Request $request): JsonResponse
+    {
+        $coupons = Coupon::withCount('bookings')
+            ->orderBy('code')
+            ->get();
+
+        return response()->json([
+            'message' => 'Available coupons retrieved successfully.',
+            'data' => CouponResource::collection($coupons),
         ]);
     }
 }
