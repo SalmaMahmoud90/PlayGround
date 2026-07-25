@@ -18,9 +18,9 @@ class Booking extends Model
         'user_id', 
         'coupon_id'
     ];
-    public function reviews()
+    public function review()
     {
-        return $this->hasMany(Review::class);
+        return $this->hasOne(Review::class);
     }
     public function playground(){
         return $this->belongsTo(PlayGround::class);

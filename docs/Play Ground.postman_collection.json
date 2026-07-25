@@ -1,0 +1,295 @@
+{
+  "info": {
+    "_postman_id": "feb81bb0-75a8-4c68-a8ef-45c11649c782",
+    "name": "Play Ground",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "42627735"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "create user",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Salma",
+                  "type": "text",
+                  "uuid": "68059baa-f2c3-41b1-9515-ed649ae77c62"
+                },
+                {
+                  "key": "email",
+                  "value": "smsm9@gmail.com",
+                  "type": "text",
+                  "uuid": "b097ce7f-8581-4064-aba6-bdaf3232c72a"
+                },
+                {
+                  "key": "password",
+                  "value": "12345678",
+                  "type": "text",
+                  "uuid": "9c34a3e9-ec4d-4e40-b6e3-980301caf4d1"
+                },
+                {
+                  "key": "password_confirmation",
+                  "value": "12345678",
+                  "type": "text",
+                  "uuid": "bad4330f-6024-48c2-86e1-58576fd70d18"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{url}}/register",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "salma",
+                  "type": "text",
+                  "uuid": "0c3caa69-fc2e-413b-81a1-a92f3546409c"
+                },
+                {
+                  "key": "email",
+                  "value": "smsm9@gmail.com",
+                  "type": "text",
+                  "uuid": "c4e6b039-e75d-4ac7-963c-010fde0d336c"
+                },
+                {
+                  "key": "password",
+                  "value": "12345678",
+                  "type": "text",
+                  "uuid": "190612b6-25d0-4b80-ad8a-dad5f0dd8ae3"
+                },
+                {
+                  "key": "password_confirmation",
+                  "value": "12345678",
+                  "type": "text",
+                  "uuid": "223f0092-604d-4779-9c81-ae93fa802365"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{url}}/login",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_secret_17z8}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "email",
+                  "type": "text",
+                  "uuid": "f1a1af0e-ff08-46ae-ae61-2c2a2c0d67e1",
+                  "value": "smsm@gmail.com"
+                },
+                {
+                  "key": "password",
+                  "type": "text",
+                  "uuid": "23b51d06-927e-472e-8e3e-a8d7a89feb49",
+                  "value": "123123123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{url}}/me",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "item": [
+        {
+          "name": "create booking",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_secret_17z8}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"play_ground_id\": 1,\r\n    \"start_date_time\": \"2026-07-26 10:00:00\",\r\n    \"end_date_time\": \"2026-07-26 12:00:00\",\r\n    \"payment_method\": \"cash\",\r\n    \"coupon_id\": null\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/bookings",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "view bookings",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "booking details",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "cancel",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_secret_17z8}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/bookings/1",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "bookings",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": ""
+    },
+    {
+      "key": "auth_secret_17z8",
+      "secret": true
+    }
+  ]
+}
