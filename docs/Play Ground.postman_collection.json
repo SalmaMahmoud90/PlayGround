@@ -241,6 +241,14 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "pay",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
         }
       ]
     },
@@ -248,7 +256,28 @@
       "name": "Reviews",
       "item": [
         {
-          "name": "New Request",
+          "name": "review",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorite",
+      "item": [
+        {
+          "name": "add to favorite",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "remove from favorite",
           "request": {
             "method": "GET",
             "header": []

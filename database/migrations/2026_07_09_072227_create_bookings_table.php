@@ -21,7 +21,7 @@ return new class extends Migration
             $table->dateTime('cancelled_at')->nullable();
             $table->enum('status',['pending', 'confirmed', 'rejected', 'cancelled']);
             $table->string('payment_method');
-            $table->enum('payment_status', ['paid', 'unpaid']);
+            $table->enum('payment_status', ['paid', 'pending', 'unpaid']);
             $table->decimal('total_price', 10, 2);
             $table->timestamps();
         });

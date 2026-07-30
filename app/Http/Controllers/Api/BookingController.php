@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PaymentRequest;
 use App\Http\Requests\StoreBookingRequest;
 use App\Models\Booking;
 use App\Models\Coupon;
@@ -153,5 +154,27 @@ class BookingController extends Controller
             ]
         ], 200);
         }
+    }
+
+    public function pay(PaymentRequest $request, string $id){
+        $book= Booking::findOrFail($id);
+        $data= $request->validated();
+        if ($book->user_id != auth()->id()) {
+            return response()->json([
+                'message' => 'You are not authorized to pay for this booking.'
+            ], 403);
+        }
+        $book->update([
+            'payment_method'=> $data['payment_method'],
+            'payment_status'=> 'pending',
+        ]);
+        return response()->json([
+            'message' => 'Payment request submitted successfully.',
+            'data' => [
+                'booking_id' => $book->id,
+                'payment_method' => $book->payment_method,
+                'payment_status' => $book->payment_status,
+            ]   
+        ]);
     }
 }
