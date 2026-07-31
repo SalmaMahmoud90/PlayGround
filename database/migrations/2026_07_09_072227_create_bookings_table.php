@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('play_ground_id')->constrained('play_grounds')->cascadeOnDelete();
-            $table->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
+            $table->foreignId('coupon_id')->nullable()->constrained('coupons')->cascadeOnDelete();
             $table->dateTime('start_date_time');
             $table->dateTime('end_date_time');
             $table->dateTime('cancelled_at')->nullable();
