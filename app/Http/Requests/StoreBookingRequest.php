@@ -26,7 +26,6 @@ class StoreBookingRequest extends FormRequest
             'play_ground_id' => 'required|exists:play_grounds,id',
             'start_date_time' => 'required|date|after:now',
             'end_date_time' => 'required|date|after:start_date_time',
-            'payment_method' => 'required|in:cash,card',
             'coupon_id' => 'nullable|exists:coupons,id',
         ];
     }

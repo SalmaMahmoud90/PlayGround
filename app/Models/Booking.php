@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Booking extends Model
 {
     protected $fillable = [
+        'play_ground_id',
+        'user_id',
+        'coupon_id',
         'start_date_time',
         'end_date_time',
         'status',
@@ -14,21 +17,25 @@ class Booking extends Model
         'payment_status',
         'total_price',
         'cancelled_at',
-        'play_ground_id', 
-        'user_id', 
-        'coupon_id'
     ];
+
     public function review()
     {
         return $this->hasOne(Review::class);
     }
-    public function playground(){
-        return $this->belongsTo(PlayGround::class);
+
+    public function playground()
+    {
+        return $this->belongsTo(Playground::class, 'play_ground_id');
     }
-    public function user(){
+
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
-    public function coupon(){
+
+    public function coupon()
+    {
         return $this->belongsTo(Coupon::class);
     }
 }

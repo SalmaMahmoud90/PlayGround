@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\PlayGround;
+use App\Models\Playground;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,7 +13,7 @@ class PlayGroundSeeder extends Seeder
      */
     public function run(): void
     {
-        PlayGround::create([
+        Playground::create([
             'location' => 'Al Hamra Street',
             'city' => 'Latakia',
             'type' => 'Football',

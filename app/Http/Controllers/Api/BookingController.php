@@ -77,9 +77,8 @@ class BookingController extends Controller
             'start_date_time' => $data['start_date_time'],
             'end_date_time' => $data['end_date_time'],
             'status' => 'pending',
-            'payment_method' => $data['payment_method'],
-            'payment_status' => 'unpaid',
-            'total_price' => $totalPrice,
+	'payment_status' => 'pending',            
+	'total_price' => $totalPrice,
         ]);
         return response()->json([
             'message' => 'Booking created successfully.',
@@ -164,9 +163,11 @@ class BookingController extends Controller
                 'message' => 'You are not authorized to pay for this booking.'
             ], 403);
         }
+        $paymentStatus = $data['payment_method'] == 'card'? 'paid': 'pending';
+
         $book->update([
-            'payment_method'=> $data['payment_method'],
-            'payment_status'=> 'pending',
+            'payment_method' => $data['payment_method'],
+            'payment_status' => $paymentStatus,
         ]);
         return response()->json([
             'message' => 'Payment request submitted successfully.',

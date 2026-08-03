@@ -8,13 +8,18 @@ class Review extends Model
 {
     protected $fillable = ['user_id', 'play_ground_id', 'booking_id', 'comment', 'rating'];
     
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
-    public function playground(){
-        return $this->belongsTo(PlayGround::class);
+
+    public function playground()
+    {
+        return $this->belongsTo(Playground::class, 'play_ground_id');
     }
-    public function booking(){
+
+    public function booking()
+    {
         return $this->belongsTo(Booking::class);
     }
 }

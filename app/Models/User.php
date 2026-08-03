@@ -4,25 +4,29 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    protected $fillable=['name', 'email', 'password','user_type'];
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'phone',
+        'is_active',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -30,14 +34,41 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function reviews(){
-        return $this->hasMany(Review::class);
+
+    // العلاقات
+    public function owner()
+    {
+        return $this->hasOne(Owner::class);
     }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
     }
-    public function bookings(){
-        return $this->hasMany(Booking::class);
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    // دوال مساعدة
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isOwner()
+    {
+        return $this->role === 'owner';
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'reg_user';
     }
 }
