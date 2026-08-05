@@ -5,8 +5,8 @@
 ## Overview
 
 PlayGround Booking System consists of two main components: 
-- **Admin Dashboard (Blade).
-- **User API (REST API).
+- Admin Dashboard (Blade).
+- User API (REST API).
 
 ## Description
 
