@@ -249,6 +249,14 @@
             "header": []
           },
           "response": []
+        },
+        {
+          "name": "search",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
         }
       ]
     },
